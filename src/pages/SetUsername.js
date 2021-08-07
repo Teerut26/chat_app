@@ -11,6 +11,7 @@ export default function setUserName() {
     if(Username.length !== 0){
       localStorage.setItem("username",Username)
       localStorage.setItem("username_key",uuidv4())
+      localStorage.setItem("sound",true)
       history.push("/join")
     }
   }

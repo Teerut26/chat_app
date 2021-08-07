@@ -40,12 +40,7 @@ const roomReducer = (state = 0, action) => {
       firebase
         .database()
         .ref(`/rooms/${action.data.room_key}/message`)
-        .push({
-          author:action.data.author,
-          author_id:action.data.author_id,
-          content:action.data.content,
-          timeStamp:new Date().toJSON(),
-        })
+        .push(action.data)
         
       return state;
     default:

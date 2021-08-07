@@ -3,6 +3,10 @@ import { withRouter } from "react-router-dom";
 import firebase from "../firebase";
 import { connect } from "react-redux";
 
+import Swal from 'sweetalert2';
+import SendImage from "../components/SendImageBase64";
+import SendImageUrl from "../components/SendImageUrl";
+
 class Room extends Component {
   chatContainer = React.createRef();
 
@@ -15,17 +19,21 @@ class Room extends Component {
       userKey: "",
       content: "",
       messages: null,
+      audio: new Audio("/notify.mp3"),
+      sound: null,
+      roomAllow:false
     };
   }
 
-  componentDidUpdate() {
-    console.log("componentDidUpdate");
+  sound_on_check() {
+    this.setState({ sound: localStorage.getItem("sound") });
   }
 
   componentDidMount() {
     if (localStorage.getItem("username") == null) {
       this.props.history.push("/set/username");
     }
+    // this.sound_on_check()
     firebase
       .database()
       .ref(`/rooms`)
@@ -41,8 +49,9 @@ class Room extends Component {
           (item) => item.data.key_room === this.state.roomID
         );
         // if()
-        this.setState({ data: result[0] });
         
+        this.setState({ data: result[0] });
+
         let obj2 = [];
         for (let key2 in result[0].data.message) {
           obj2.push(result[0].data.message[key2]);
@@ -51,13 +60,7 @@ class Room extends Component {
       });
   }
 
-  componentWillUnmount() {
-    this.props.dispatch({
-      type: "remove_user",
-      room_key: this.state.data.key,
-      user_key: localStorage.getItem("username_key"),
-    });
-  }
+  componentWillUnmount() {}
 
   scrollToMyRef = () => {
     const scroll =
@@ -68,9 +71,10 @@ class Room extends Component {
 
   componentDidUpdate() {
     this.scrollToMyRef();
+    // console.log(this.state.sendImage);
   }
 
-  submit_form() {
+  submit_form(obj) {
     if (this.state.content.length !== 0) {
       console.log("submit");
       this.props.dispatch({
@@ -80,13 +84,21 @@ class Room extends Component {
           author: localStorage.getItem("username"),
           author_id: localStorage.getItem("username_key"),
           content: this.state.content,
+          content_type: "text",
+          timeStamp: new Date().toJSON(),
         },
       });
       this.setState({ content: "" });
-      // setTimeout(() => {
-      //   this.scrollToMyRef();
-      // }, 50);
     }
+  }
+
+  showImage(url){
+    Swal.fire({
+      html:`<img src="${url}" width="100%"></img>`,
+      showCloseButton: true,
+      focusConfirm: false,
+
+    })
   }
 
   render() {
@@ -94,16 +106,28 @@ class Room extends Component {
       return <></>;
     }
 
+    if(this.state.roomAllow){
+      
+    }
+
     return (
       <div className="container mt-5">
         <div className="card">
           <div className="card-body">
-            {/* <h5 className="card-title">ID : {this.state.data.data.key_room}</h5> */}
             <p className="card-text">
-              <div>
-                Author : {this.state.data.data.room_owner_username}
-                <br />
-                Room Name : {this.state.data.data.room_name}
+              <div className="d-flex justify-content-between">
+                <div>
+                  Author : {this.state.data.data.room_owner_username}
+                  <br />
+                  Room Name : {this.state.data.data.room_name}
+                </div>
+                
+                <div>
+                  <div>
+                    <i class="fas fa-user"></i>{" "}
+                    {localStorage.getItem("username")}
+                  </div>
+                </div>
               </div>
               <hr />
               <div
@@ -123,23 +147,40 @@ class Room extends Component {
                       >
                         <div
                           href="#"
-                          className="d-inline-flex bg-light p-2 px-3 m-2 rounded-pill"
+                          className="d-inline-flex bg-light p-2 px-3 m-2 rounded"
                           ref={this.state.myRef}
-                          title={new Date(item.timeStamp).toLocaleString("us-US")}
+                          title={new Date(item.timeStamp).toLocaleString(
+                            "us-US"
+                          )}
                         >
                           <div>
                             <div>
-                              {item.author_id === localStorage.getItem("username_key") ? `${item.content}` : `${item.author} : ${item.content}`}
-                              {/* {item.author} : {item.content} */}
+                              {item.content_type === "image" ? (
+                                <div>
+                                  {item.author_id ===
+                                  localStorage.getItem("username_key")
+                                    ? ``
+                                    : <>{item.author}<br /></> }
+                                  <img
+                                    src={item.content}
+                                    onClick={()=>this.showImage(item.content)}
+                                    alt="image"
+                                    width="80"
+                                  />
+                                </div>
+                              ) : item.author_id ===
+                                localStorage.getItem("username_key") ? (
+                                `${item.content}`
+                              ) : (
+                                `${item.author} : ${item.content}`
+                              )}
                             </div>
-                            {/* <span>{item.author} : {item.content}</span> */}
                           </div>
                         </div>
                       </div>
                     ))
                   : ""}
               </div>
-              {/* <div ref={this.state.myRef} /> */}
               <div className="input-group mb-3">
                 <input
                   type="text"
@@ -148,15 +189,19 @@ class Room extends Component {
                   value={this.state.content}
                   onChange={(v) => this.setState({ content: v.target.value })}
                   onKeyPress={(e) =>
-                    e.key === "Enter" ? this.submit_form() : ""
+                    e.key === "Enter"
+                      ? this.submit_form({ content_type: "text" })
+                      : ""
                   }
-                  // onKeyPress={(e)=>console.log(e.key)}
+                  maxLength="100"
                 />
+                <SendImage obj={{ room_key: this.state.data.key }} />
+                <SendImageUrl obj={{ room_key: this.state.data.key }} />
                 <div
-                  onClick={() => this.submit_form()}
+                  onClick={() => this.submit_form({ content_type: "text" })}
                   className="btn btn-primary border-0"
                 >
-                  <i class="fas fa-paper-plane"></i> SendMessage
+                  <i class="fas fa-paper-plane"></i>
                 </div>
               </div>
             </p>

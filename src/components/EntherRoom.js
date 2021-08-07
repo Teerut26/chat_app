@@ -122,7 +122,7 @@ const ModulePopup = (props) => {
   // }, [props]);
 
   const sendProps = () => {
-    if (RoomName.length !== 0) {
+    if (RoomName.length !== 0 && RoomPassword !== "null") {
       props.sendPropsEx({
         RoomName,
         RoomPassword: RoomPassword.length !== 0 ? RoomPassword : "null",

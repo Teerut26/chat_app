@@ -39,12 +39,11 @@ class ListRoom extends Component {
     this.props.history.push(path);
   }
 
-  remove_room(key){
+  remove_room(key) {
     this.props.dispatch({
-      type:"remove_room",
-      key:key,
-      
-    })
+      type: "remove_room",
+      key: key,
+    });
   }
 
   render() {
@@ -69,17 +68,21 @@ class ListRoom extends Component {
                           {item.data.room_name}
                           {" | "}
                           {item.data.room_user_key ===
-                          localStorage.getItem("username_key")
-                            ? <b>My Room</b>
-                            : item.data.room_owner_username}
+                          localStorage.getItem("username_key") ? (
+                            <b>My Room</b>
+                          ) : (
+                            item.data.room_owner_username
+                          )}
                         </div>
                         <div>
                           {item.data.room_user_key === this.state.user_key ? (
-                            <i onClick={()=>this.remove_room(item.key)} class="fas text-danger fa-trash-alt "></i>
+                            <i
+                              onClick={() => this.remove_room(item.key)}
+                              class="fas text-danger fa-trash-alt "
+                            ></i>
                           ) : (
                             ""
                           )}
-
                           <i
                             onClick={() =>
                               this.goToPath(`/room/${item.data.key_room}`)
